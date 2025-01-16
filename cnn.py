@@ -87,20 +87,26 @@ class Cifar10CnnModel(ImageClassificationBase):
         self.network = nn.Sequential(
             # expects input of 128, 3, 32, 32
             nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=1), # 128, 32, 32, 32
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1), # 128, 64, 32, 32
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2,2), # 128, 64, 16, 16
 
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1), # 128, 128, 16, 16
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1), # 128, 128, 16, 16
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2,2), # 128, 128, 8, 8
 
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 128, 256, 8, 8
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1), # 128, 256, 8, 8
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2,2), # 128, 256, 4, 4
 
@@ -157,3 +163,9 @@ num_epochs = 10
 opt_func = torch.optim.Adam
 lr = 0.001
 history = fit(epochs=num_epochs, lr=lr, train_data=train_data, val_data=val_data, model=model, opt_func=opt_func)
+
+# Pre Batchnorm
+# end of epcoch 9: train loss: 0.38342195749282837, val_loss: 0.8656366467475891, val_acc: 0.7635455131530762
+
+# Post Batchnorm 
+# end of epcoch 9: train loss: 0.24247115850448608, val_loss: 0.6352024078369141, val_acc: 0.8247932195663452
