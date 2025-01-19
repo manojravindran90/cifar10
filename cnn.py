@@ -11,6 +11,7 @@ from torchvision.datasets import ImageFolder
 from torchvision.transforms import ToTensor
 # import matplotlib
 # import matplotlib.pyplot as plt
+from torch.cuda.amp import GradScaler, autocast
 
 @torch.no_grad()
 def eval(model, val_data):
@@ -41,8 +42,14 @@ def fit(epochs, lr, train_data, val_data, model, opt_func=torch.optim.SGD):
         for batch in train_data:
             start_time = time.time()
             train_loss = []
-            loss = model.training_step(batch)
-            train_loss.append(loss)
+            # Use autocast with the appropriate device type
+            if torch.cuda.is_available():
+                with torch.amp.autocast('cuda'):
+                    loss = model.training_step(batch)
+                    train_loss.append(loss)
+            else:
+                loss = model.training_step(batch)
+                train_loss.append(loss)
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -106,12 +113,12 @@ if __name__ == "__main__":
 
     # train/val split
     val_size = 5000
-    batch_size = 1536
+    batch_size = 512
     train_size = len(dataset_from_train_folder) - val_size
     train_split, val_split = random_split(dataset_from_train_folder, [train_size, val_size])
 
-    train_data = DataLoader(train_split, batch_size=batch_size, shuffle=True, num_workers=32, pin_memory=True)
-    val_data = DataLoader(val_split, batch_size=batch_size * 2, num_workers=32, pin_memory=True)
+    train_data = DataLoader(train_split, batch_size=batch_size, shuffle=True, num_workers=12, pin_memory=True)
+    val_data = DataLoader(val_split, batch_size=batch_size * 2, num_workers=12, pin_memory=True)
 
 
     class ImageClassificationBase(nn.Module):
@@ -232,7 +239,7 @@ if __name__ == "__main__":
 
     model = Plain34LayerCifar10().to(device)
 
-    num_epochs = 10
+    num_epochs = 50
     opt_func = torch.optim.AdamW
     lr = 0.01
     history = fit(epochs=num_epochs, lr=lr, train_data=train_data, val_data=val_data, model=model, opt_func=opt_func)
